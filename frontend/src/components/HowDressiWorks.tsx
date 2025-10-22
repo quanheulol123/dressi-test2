@@ -96,14 +96,14 @@ export default function HowDressiWorks({ onBetaClick }: HowDressiWorksProps) {
           return (
             <motion.div
               key={step.title}
-              className={`flex flex-col items-center gap-1 rounded-[32px] border border-white/15 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-10 shadow-[0_25px_60px_-40px_rgba(12,12,12,0.8),0_0_40px_-10px_rgba(255,82,168,0.15)] backdrop-blur-3xl transition-all duration-700 hover:shadow-[0_35px_80px_-40px_rgba(12,12,12,0.9),0_0_60px_-10px_rgba(255,82,168,0.25)] hover:border-white/25 hover:bg-gradient-to-br hover:from-white/15 hover:via-white/8 hover:to-transparent lg:flex-row lg:gap-8 ${isEven ? "" : "lg:flex-row-reverse"}`}
+              className={`flex flex-col items-center gap-8 rounded-[32px] border border-white/15 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-10 shadow-[0_25px_60px_-40px_rgba(12,12,12,0.8),0_0_40px_-10px_rgba(255,82,168,0.15)] backdrop-blur-3xl transition-all duration-700 hover:shadow-[0_35px_80px_-40px_rgba(12,12,12,0.9),0_0_60px_-10px_rgba(255,82,168,0.25)] hover:border-white/25 hover:bg-gradient-to-br hover:from-white/15 hover:via-white/8 hover:to-transparent lg:flex-row lg:items-stretch lg:gap-10 lg:min-h-[720px] ${isEven ? "" : "lg:flex-row-reverse"}`}
               whileInView={{ opacity: 1, y: 0 }}
               initial={{ opacity: 0, y: 80 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.65, ease: "easeOut" }}
             >
               <motion.div
-                className="flex-1 lg:max-w-[420px]"
+                className="flex-1 lg:max-w-[420px] lg:flex lg:flex-col lg:justify-center"
                 variants={textVariants}
                 initial="hidden"
                 whileInView="visible"
@@ -124,19 +124,19 @@ export default function HowDressiWorks({ onBetaClick }: HowDressiWorksProps) {
               </motion.div>
 
               <motion.div
-                className="flex flex-1 items-center justify-center lg:justify-end"
+                className="flex flex-1 items-center justify-center lg:h-full lg:justify-end"
                 initial={isEven ? "hiddenRight" : "hiddenLeft"}
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.5 }}
                 transition={{ duration: 0.7, ease: "easeOut" }}
                 variants={imageVariants}
               >
-                <div className="relative w-full max-w-[2400px] sm:max-w-[2800px] lg:max-w-none">
+                <div className="relative w-full h-72 sm:h-80 lg:h-full max-w-[2400px] sm:max-w-[2800px] lg:max-w-none bg-black/40 rounded-[40px]">
                   <div className="pointer-events-none absolute inset-0 -z-10 rounded-[40px] bg-gradient-to-br from-white/25 via-transparent to-transparent blur-3xl" />
                   <img
                     src={step.image}
                     alt={step.title}
-                    className="w-full rounded-[40px] object-cover shadow-[0_70px_140px_-50px_rgba(15,23,42,0.62)]"
+                    className="h-full w-full rounded-[40px] object-contain shadow-[0_70px_140px_-50px_rgba(15,23,42,0.62)]"
                     loading="lazy"
                   />
                 </div>
