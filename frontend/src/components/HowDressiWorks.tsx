@@ -131,7 +131,7 @@ export default function HowDressiWorks({ onBetaClick }: HowDressiWorksProps) {
                 transition={{ duration: 0.7, ease: "easeOut" }}
                 variants={imageVariants}
               >
-                <div className="relative w-full h-72 sm:h-80 lg:h-full max-w-[2400px] sm:max-w-[2800px] lg:max-w-none bg-black/40 rounded-[40px]">
+                <div className="relative w-full h-72 sm:h-80 lg:h-full max-w-[2400px] sm:max-w-[2800px] lg:max-w-none">
                   <div className="pointer-events-none absolute inset-0 -z-10 rounded-[40px] bg-gradient-to-br from-white/25 via-transparent to-transparent blur-3xl" />
                   <img
                     src={step.image}
