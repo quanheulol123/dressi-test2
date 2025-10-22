@@ -71,7 +71,7 @@ python manage.py collectstatic --noinput
    - **Build Command**: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
    - **Start Command**: `gunicorn myproject.wsgi:application --bind 0.0.0.0:8000`
 5. Add the environment variables from `.env.example` plus production secrets (generate a fresh `DJANGO_SECRET_KEY`).
-6. Deploy and note the backend URL (e.g. `https://your-backend.onrender.com`).
+6. Deploy and note the backend URL (currently `https://dressi-test2.onrender.com`).
 
 ---
 
@@ -84,7 +84,7 @@ python manage.py collectstatic --noinput
    - **Install Command**: `npm install`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
-4. Add environment variable `VITE_API_BASE_URL=https://your-backend.onrender.com`.
+4. Add environment variable `VITE_API_BASE_URL=https://dressi-test2.onrender.com`.
 5. Deploy the site and verify it loads correctly.
 
 ---
