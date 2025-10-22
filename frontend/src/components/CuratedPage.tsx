@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Check, Heart } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -43,6 +43,50 @@ function getOutfitKey(outfit: OutfitCard, index: number) {
   return `${persistent}-${index}`;
 }
 
+function SkeletonCuratedCard() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-[#181c24] shadow-lg" aria-hidden="true">
+      <div className="relative h-72 w-full">
+        <div className="skeleton-surface absolute inset-0" />
+        <div className="absolute top-4 right-4">
+          <div className="skeleton-chip h-9 w-9 rounded-full opacity-80" />
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#181c24] via-[#181c24]/80 to-transparent" />
+      </div>
+      <div className="flex flex-col gap-4 p-5">
+        <div className="flex gap-2">
+          <div className="skeleton-chip h-3 w-16 rounded-full" />
+          <div className="skeleton-chip h-3 w-24 rounded-full" />
+          <div className="skeleton-chip h-3 w-12 rounded-full" />
+        </div>
+        <div className="skeleton-line h-9 w-full rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonOverlay() {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <div className="relative h-72 w-full">
+        <div className="skeleton-surface absolute inset-0" />
+        <div className="absolute top-4 right-4">
+          <div className="skeleton-chip h-9 w-9 rounded-full opacity-80" />
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#181c24] via-[#181c24]/80 to-transparent" />
+      </div>
+      <div className="flex flex-col gap-4 p-5">
+        <div className="flex gap-2">
+          <div className="skeleton-chip h-3 w-16 rounded-full" />
+          <div className="skeleton-chip h-3 w-24 rounded-full" />
+          <div className="skeleton-chip h-3 w-12 rounded-full" />
+        </div>
+        <div className="skeleton-line h-9 w-full rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 export default function CuratedPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -62,26 +106,53 @@ export default function CuratedPage() {
     }
   });
 
+  const [liked, setLiked] = useState<OutfitCard[] | null>(null);
+  const [imageLoadState, setImageLoadState] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setImageLoadState({});
+      setLiked([]);
+      return;
+    }
+
+    const state = (location.state ?? null) as { liked?: unknown } | null;
+    const likedFromState = state?.liked;
+    const incoming = Array.isArray(likedFromState) ? (likedFromState as OutfitCard[]) : [];
+
+    if (incoming.length) {
+      try {
+        window.localStorage.setItem("likedOutfits", JSON.stringify(incoming));
+      } catch (error) {
+        console.error("Failed to persist liked outfits", error);
+      }
+      setImageLoadState({});
+      setLiked(incoming);
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem("likedOutfits");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setImageLoadState({});
+          setLiked(parsed as OutfitCard[]);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to restore liked outfits", error);
+    }
+
+    setImageLoadState({});
+    setLiked([]);
+  }, [location.state]);
+
   const hasTakenTest = Boolean(localStorage.getItem("styleTestCompleted"));
 
   // Show placeholder/test prompt if not done
   if (!hasTakenTest) return <NoTestPage />;
-
-  const liked = useMemo<OutfitCard[]>(() => {
-    const incoming = (location.state?.liked ?? []) as OutfitCard[];
-    const stored = localStorage.getItem("likedOutfits");
-    if (incoming.length) {
-      localStorage.setItem("likedOutfits", JSON.stringify(incoming));
-      return incoming;
-    } else if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  }, [location.state]);
 
   const [saveStatus, setSaveStatus] = useState<Record<string, SaveState>>({});
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -205,7 +276,13 @@ export default function CuratedPage() {
           </div>
         )}
 
-        {liked.length === 0 ? (
+        {liked === null ? (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <SkeletonCuratedCard key={`curated-skeleton-${index}`} />
+            ))}
+          </div>
+        ) : liked.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-10 text-center text-white/70">
             <p>No curated outfits yet. Swipe and like outfits to build this list.</p>
             <button
@@ -219,8 +296,18 @@ export default function CuratedPage() {
         ) : (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
             {liked.map((outfit, index) => {
-              const persistentKey = getPersistentKey(outfit);
               const renderedKey = getOutfitKey(outfit, index);
+              const isPlaceholderCard = Boolean(
+                (outfit as { isPlaceholder?: boolean }).isPlaceholder
+              );
+              const missingImage =
+                typeof outfit.image !== "string" || outfit.image.trim().length === 0;
+
+              if (isPlaceholderCard || missingImage) {
+                return <SkeletonCuratedCard key={renderedKey} />;
+              }
+
+              const persistentKey = getPersistentKey(outfit);
               const computedStatus = savedKeys.has(persistentKey) ? "saved" : saveStatus[persistentKey];
               const status = computedStatus ?? "idle";
               const canSave = Boolean(user?.token) && status !== "saved";
@@ -232,38 +319,53 @@ export default function CuratedPage() {
                     : canSave
                       ? "Save to Wardrobe"
                       : "Log in to Save";
+              const isImageLoaded = Boolean(imageLoadState[renderedKey]);
+              const markLoaded = () => {
+                setImageLoadState(prev => {
+                  if (prev[renderedKey]) return prev;
+                  return { ...prev, [renderedKey]: true };
+                });
+              };
+              const disableHeart = !isImageLoaded || status === "saving";
+              const disableSaveAction = !isImageLoaded || status === "saving" || status === "saved";
 
               return (
                 <div key={renderedKey} className="relative overflow-hidden rounded-2xl bg-[#181c24] shadow-lg">
-                  {status === "saved" ? (
-                    <span className="absolute top-4 right-4 z-10 inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200">
-                      <Check className="h-4 w-4" /> Saved
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSave(outfit)}
-                      className="absolute top-4 right-4 z-10 rounded-full bg-white/15 p-2 text-white transition hover:bg-pink-500"
-                      disabled={status === "saving"}
-                    >
-                      <Heart size={20} />
-                    </button>
-                  )}
+                  <div className={`absolute top-4 right-4 z-30 transition-opacity duration-200 ${isImageLoaded ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                    {status === "saved" ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200">
+                        <Check className="h-4 w-4" /> Saved
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSave(outfit)}
+                        className="rounded-full bg-white/15 p-2 text-white transition hover:bg-pink-500"
+                        disabled={disableHeart}
+                      >
+                        <Heart size={20} />
+                      </button>
+                    )}
+                  </div>
 
-                  <img
-                    src={outfit.image}
-                    alt={outfit.name || "Curated outfit"}
-                    className="h-72 w-full object-cover"
-                    loading="lazy"
-                  />
+                  <div className="relative h-72 w-full bg-[#0d111a]">
+                    <img
+                      src={outfit.image || ""}
+                      alt={outfit.name || "Curated outfit"}
+                      className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${isImageLoaded ? "opacity-100" : "opacity-0"}`}
+                      onLoad={markLoaded}
+                      onError={markLoaded}
+                      loading="lazy"
+                    />
+                  </div>
 
-                  <div className="flex flex-col gap-4 p-5">
+                  <div className={`flex flex-col gap-4 p-5 transition-opacity duration-300 ${isImageLoaded ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                     <div className="flex flex-wrap gap-2"></div>
 
                     <button
                       type="button"
                       onClick={() => handleSave(outfit)}
-                      disabled={status === "saving" || status === "saved"}
+                      disabled={disableSaveAction}
                       className={`w-full rounded-full px-4 py-2 text-sm font-semibold transition ${status === "saved"
                           ? "bg-emerald-500/20 text-emerald-200"
                           : "bg-pink-500 text-white hover:bg-pink-400 disabled:opacity-60"
@@ -272,6 +374,8 @@ export default function CuratedPage() {
                       {buttonLabel}
                     </button>
                   </div>
+
+                  {!isImageLoaded && <SkeletonOverlay />}
                 </div>
               );
             })}
