@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+# Django
+db.sqlite3
+/media
+/staticfiles
+
+# Env & Secrets
+.env
+key.json
+
+# Backup / dump files
+*.dump
+*.sql
+
+# Virtualenv
+.venv/
+venv_new/
+env/
+
+# Node
+node_modules/
+dist/
+build/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+clear.py
+.DS_Store
