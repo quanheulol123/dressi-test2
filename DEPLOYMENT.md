@@ -50,6 +50,7 @@ Before deploying, update your backend environment:
 - Set `DJANGO_DEBUG=False`.
 - Set `DJANGO_ALLOWED_HOSTS` to include the backend domain.
 - Set `DJANGO_CSRF_TRUSTED_ORIGINS` and `DJANGO_CORS_ALLOWED_ORIGINS` to cover the HTTPS URLs of both backend and frontend.
+- Toggle `ENABLE_AI_GENERATION` (`False` disables Gemini background generation so only stored outfits show; set to `True` for devs experimenting with new looks).
 - Provide Postgres connection details (`DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`) if you use a managed database.
 - Rotate and store all secrets (Cloudflare, MongoDB, Gemini, Weather API, etc.) in your hosting provider.
 

@@ -55,12 +55,19 @@ s3 = boto3.client(
     aws_secret_access_key=SECRET_ACCESS_KEY
 )
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
 genai_client = genai.Client(api_key=GENAI_API_KEY)
 TOTAL_IMAGES = 20
 ADMIN_EMAIL = (os.getenv("ADMIN_EMAIL") or "").strip().lower()
 if not ADMIN_EMAIL:
     raise RuntimeError("ADMIN_EMAIL environment variable must be set.")
 MAX_EARLY_ACCESS_PAGE_SIZE = 200
+ENABLE_AI_GENERATION = _env_flag("ENABLE_AI_GENERATION", False)
 
 # --- Helpers ---
 fashion_synonyms = {
@@ -508,6 +515,10 @@ def get_wardrobe(request):
     return JsonResponse({"wardrobe": wardrobe})
 
 def generate(base_tags, image_count_per_weather=3, user_id=None):
+    if not ENABLE_AI_GENERATION:
+        print("[DEBUG] AI generation disabled via ENABLE_AI_GENERATION")
+        return
+
     weather_types = ["hot", "cold"]
 
     normalized_tags = []
@@ -629,6 +640,11 @@ def get_generated_images(request):
 @permission_classes([AllowAny])
 @csrf_exempt
 def generate_outfits(request):
+    if not ENABLE_AI_GENERATION:
+        return JsonResponse(
+            {"error": "AI generation is disabled."},
+            status=503,
+        )
     try:
         data = json.loads(request.body or "{}")
     except json.JSONDecodeError:
@@ -908,7 +924,7 @@ def recommend(request):
 
     random.shuffle(response_images)
 
-    if base_tags:
+    if base_tags and ENABLE_AI_GENERATION:
         threading.Thread(
             target=generate,
             args=(base_tags, min(image_count, 2), user_id),
